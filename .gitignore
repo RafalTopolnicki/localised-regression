@@ -1,0 +1,4 @@
+*.csv
+*.pyc
+notebooks/.ipynb_checkpoints
+venv/
