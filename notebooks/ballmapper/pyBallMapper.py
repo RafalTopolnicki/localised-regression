@@ -69,6 +69,8 @@ class BallMapper():
        
         for node in self.Graph.nodes:
             self.Graph.nodes[node]['points covered'] = self.points_covered_by_landmarks[node]
+            self.Graph.nodes[node]['beta'] = None
+            self.Graph.nodes[node]['intercept'] = None
             self.Graph.nodes[node]['size'] = len(self.Graph.nodes[node]['points covered'])
             # rescale the size for display
             self.Graph.nodes[node]['size rescaled'] = MAX_SCALE*self.Graph.nodes[node]['size']/MAX_NODE_SIZE + MIN_SCALE 
