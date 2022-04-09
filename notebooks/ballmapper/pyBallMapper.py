@@ -79,18 +79,26 @@ class BallMapper():
             for name, avg in coloring_df.loc[self.Graph.nodes[node]['points covered']].mean().iteritems():
                 self.Graph.nodes[node][name] = avg
         
-    def find_balls(self, points):
+    def find_balls(self, points, nearest_neighbour_extrapolation=False):
         vertices_ids = []
         for p in points:
             vertices_ids_p = []
             covered = False
+            min_distance = np.Inf
+            min_distance_vert = None
             for idx_v in self.vertices:
                 distance = np.linalg.norm(p - self.vertices_pos[idx_v])
                 if distance <= self.epsilon:
                     covered = True
                     vertices_ids_p.append(idx_v)
+                if distance < min_distance:
+                    min_distance = distance
+                    min_distance_vert = idx_v
             if not covered:
-                vertices_ids_p.append(None)
+                if nearest_neighbour_extrapolation:
+                    vertices_ids_p.append(min_distance_vert)
+                else:
+                    vertices_ids_p.append(None)
             vertices_ids.append(vertices_ids_p)
         return vertices_ids
     
