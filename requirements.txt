@@ -8,3 +8,4 @@ networkx
 tqdm
 ipywidgets
 catboost
+ray
