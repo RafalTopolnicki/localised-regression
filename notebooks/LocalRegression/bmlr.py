@@ -6,7 +6,7 @@ from sklearn.metrics import mean_squared_error
 from .ballmapper import BallMapper
 
 class BMLR:
-    def __init__(self, cut, M, epsilon=1, substitution_policy = 'global'):
+    def __init__(self, cut, M, epsilon=1, substitution_policy='global', include_y=False):
         self.cut = cut
         self.M = M
         self.substitution_policy = substitution_policy
@@ -18,6 +18,7 @@ class BMLR:
         self.fitted = False
         self.epsilon = epsilon
         self.return_nans = False
+        self.include_y = include_y
         
 #     def fit(self, x, y, epsilon=None):
 #         # if epsilon parameters is given, use it
@@ -53,12 +54,16 @@ class BMLR:
         self.dpts = x.shape[1]
         self.ball_mappers = []
         self.fitted = True
+
         # fit global model
         if self.substitution_policy == 'global':
-            self.lm_global.fit(x,y)
-        
+            self.lm_global.fit(x, y)
+
         for r_ in range(M):
-            bm = BallMapper(points=x, coloring_df=pd.DataFrame(y), epsilon=epsilon, shuffle=True)
+            if self.include_y:
+                bm = BallMapper(points=x, coloring_df=pd.DataFrame(y), points_y=y, epsilon=epsilon, shuffle=True)
+            else:
+                bm = BallMapper(points=x, coloring_df=pd.DataFrame(y), epsilon=epsilon, shuffle=True)
             self.ball_mappers.append(bm)
             for node_id in bm.Graph.nodes:
                 ball_pts_ind = bm.Graph.nodes[node_id]['points covered']
