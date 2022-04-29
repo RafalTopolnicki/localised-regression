@@ -6,6 +6,7 @@ from LocalRegression.bmlr import BMLR
 from sklearn.metrics import mean_squared_error, mean_absolute_percentage_error
 from sklearn.experimental import enable_halving_search_cv
 from sklearn.model_selection import HalvingGridSearchCV
+from pyearth import Earth
 
 
 def model_random_forest_params(x, y):
@@ -70,3 +71,20 @@ def model_svr(x, y, x_test, y_test, params):
     score = mean_squared_error(y_test, pred, squared=False)
     mape = mean_absolute_percentage_error(y_test, pred)
     return score, mape, pred, model
+
+
+def model_mars_params(x, y):
+    param_grid = {'max_terms': [5, 10, 100, 200],
+                 'max_degree': [1, 2, 3, 4]}
+    mars = Earth()
+    sh = HalvingGridSearchCV(mars, param_grid, cv=3, factor=3).fit(x, y)
+    return sh.best_params_
+
+
+def model_mars(x, y, x_test, y_test, params):
+    model = Earth(**params)
+    model.fit(x,y)
+    pred = model.predict(x_test)
+    score = mean_squared_error(y_test, pred, squared=False)
+    mape = mean_absolute_percentage_error(y_test, pred)
+    return score, mape, pred
