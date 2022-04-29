@@ -1,50 +1,25 @@
 import numpy as np
 import pandas as pd
 
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import ElasticNet
 from sklearn.metrics import mean_squared_error
 from .ballmapper import BallMapper
 
 class BMLR:
-    def __init__(self, cut, M, epsilon=1, substitution_policy='global', include_y=False):
+    def __init__(self, cut, M, epsilon=1, substitution_policy='global'):
         self.cut = cut
         self.M = M
         self.substitution_policy = substitution_policy
         self.npts = None
         self.dpts = None
-        self.lm_global = LinearRegression()
+        self.lm_global = ElasticNet()
         self.ball_mappers = []
         self.in_sample_remse = None
         self.fitted = False
         self.epsilon = epsilon
         self.return_nans = False
-        self.include_y = include_y
-        
-#     def fit(self, x, y, epsilon=None):
-#         # if epsilon parameters is given, use it
-#         print(f'(fit) epsilon {epsilon}')
-#         if epsilon is not None:
-#             return self.__fit__(x=x, y=y, epsilon=epsilon, M=self.M)
-#         # if epsilon parameter is not given
-#         # we search for optimal epsilon
-#         x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.35)
-#         max_optim_iter = 20
-#         epsilon_init = np.std(x)/5
-#         M_for_optim = max(1, int(self.M/2))
-#         def f_objective(eps_obj):
-#             try:
-#                 self.__fit__(x_train, y_train, eps_obj, M_for_optim)
-#             except:
-#                 return np.Inf
-#             score = self.score(x_test, y_test)
-#             return score
-#         res = minimize(f_objective, epsilon_init, method='powell',
-#                        options={'maxiter': max_optim_iter, 'maxfev': max_optim_iter})
-#         return self.__fit__(x=x, y=y, epsilon=res.x, M=self.M)
-    
+
     def fit(self, x, y):
-        # if epsilon parameters is given, use it
-        #print(self.epsilon)
         self.__fit__(x=x, y=y, epsilon=self.epsilon, M=self.M)
 
     def __fit__(self, x, y, epsilon, M):
@@ -60,17 +35,14 @@ class BMLR:
             self.lm_global.fit(x, y)
 
         for r_ in range(M):
-            if self.include_y:
-                bm = BallMapper(points=x, coloring_df=pd.DataFrame(y), points_y=y, epsilon=epsilon, shuffle=True)
-            else:
-                bm = BallMapper(points=x, coloring_df=pd.DataFrame(y), epsilon=epsilon, shuffle=True)
+            bm = BallMapper(points=x, coloring_df=pd.DataFrame(y), epsilon=epsilon, shuffle=True)
             self.ball_mappers.append(bm)
             for node_id in bm.Graph.nodes:
                 ball_pts_ind = bm.Graph.nodes[node_id]['points covered']
                 if len(ball_pts_ind) >= self.cut:
                     x_ball = x[ball_pts_ind, :]
                     y_ball = y[ball_pts_ind]
-                    lm = LinearRegression().fit(x_ball, y_ball)
+                    lm = ElasticNet().fit(x_ball, y_ball)
                     bm.Graph.nodes[node_id]['beta'] = lm.coef_
                     bm.Graph.nodes[node_id]['intercept'] = lm.intercept_
                 else:
@@ -103,7 +75,8 @@ class BMLR:
                         big_pts_ids = bm.Graph.nodes[min_id]['points covered']
                         # join the points from big ball and query ball and fit the linear model
                         all_pts_ids = big_pts_ids + ball_pts_ind
-                        lm_big = LinearRegression().fit(x[all_pts_ids, :], y[all_pts_ids])
+                        #lm_big = LinearRegression().fit(x[all_pts_ids, :], y[all_pts_ids])
+                        lm_big = ElasticNet().fit(x[all_pts_ids, :], y[all_pts_ids])
                         bm.Graph.nodes[node_id]['beta'] = lm_big.coef_
                         bm.Graph.nodes[node_id]['intercept'] = lm_big.intercept_    
 
@@ -112,12 +85,8 @@ class BMLR:
             raise ValueError('Cannot run predict(). Run fit() first')
 
         npts_test = x_test.shape[0]
-        
-        yhat = [0] * npts_test   # TODO: change list to array
-        counts = [0] * npts_test # TODO: change list to array
-
-        n_Nones = 0
-        
+        yhat = np.zeros(npts_test)
+        counts = np.zeros(npts_test)
         # iterate over all mappers
         for bm in self.ball_mappers:
             # get a list of nodes to which all test points belongs
@@ -127,7 +96,6 @@ class BMLR:
             for pt_id, ball_idx in enumerate(ball_idxs):
                 xp = x_test[pt_id, :]
                 if ball_idx[0] is not None:
-                    #print(ball_idx)
                     # given test point can belong to many balls, loop over all of those
                     # each of these balls covers several points from the trainig set
                     # here we get a list of training points ids
@@ -135,8 +103,9 @@ class BMLR:
                         yhat[pt_id] += np.matmul(bm.Graph.nodes[node_idx]['beta'], xp) + bm.Graph.nodes[node_idx]['intercept']
                         counts[pt_id] += 1.0
                 else:
-                    n_Nones += 1
+                    pass
         yhat = np.array(yhat)
+        #counts = np.array(counts).reshape(-1, 1) # FIXME: why reshape?
         counts = np.array(counts)
         yhat /= counts
         return yhat

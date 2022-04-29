@@ -5,12 +5,11 @@ from tqdm.notebook import tqdm
 
 
 class BallMapper:
-    def __init__(self, points, coloring_df, epsilon, points_y=None, shuffle=False, order=None):
+    def __init__(self, points, coloring_df, epsilon, shuffle=False, order=None):
         # find vertices
         self.vertices = {} # dict of points {idx_v: idx_p, ... }
         self.vertices_pos = {} # dict of actual vertices locations - ball centers
         self.epsilon = epsilon
-        self.concatenated_y = False
 
         centers_counter = 1
         
@@ -19,10 +18,6 @@ class BallMapper:
             if shuffle:
                 random.shuffle(order)
 
-        if points_y is not None:
-            points = np.hstack((points, points_y.reshape(-1,1)))
-            self.concatenated_y = True
-                
         for idx_p in order:
             # current point
             p = points[idx_p]
@@ -88,11 +83,7 @@ class BallMapper:
             min_distance = np.Inf
             min_distance_vert = None
             for idx_v in self.vertices:
-                if self.concatenated_y:
-                    # skip last coordinate in vertices position as for find_balls we do have the y-coordinate
-                    distance = np.linalg.norm(p - self.vertices_pos[idx_v][:-1])
-                else:
-                    distance = np.linalg.norm(p - self.vertices_pos[idx_v])
+                distance = np.linalg.norm(p - self.vertices_pos[idx_v])
                 if distance <= self.epsilon:
                     covered = True
                     vertices_ids_p.append(idx_v)
@@ -106,4 +97,3 @@ class BallMapper:
                     vertices_ids_p.append(None)
             vertices_ids.append(vertices_ids_p)
         return vertices_ids
-    
