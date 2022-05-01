@@ -87,4 +87,4 @@ def model_mars(x, y, x_test, y_test, params):
     pred = model.predict(x_test)
     score = mean_squared_error(y_test, pred, squared=False)
     mape = mean_absolute_percentage_error(y_test, pred)
-    return score, mape, pred
+    return score, mape, pred, model
