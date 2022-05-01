@@ -1,23 +1,26 @@
 import numpy as np
 import pandas as pd
 
-from sklearn.linear_model import ElasticNet
 from sklearn.metrics import mean_squared_error
 from .ballmapper import BallMapper
+from .polynomial_regression import PolynomialRegression
+
 
 class BMLR:
-    def __init__(self, cut, M, epsilon=1, substitution_policy='global'):
+    def __init__(self, cut, M, epsilon=1, substitution_policy='global',
+                 degree=1):
         self.cut = cut
         self.M = M
         self.substitution_policy = substitution_policy
         self.npts = None
         self.dpts = None
-        self.lm_global = ElasticNet()
         self.ball_mappers = []
         self.in_sample_remse = None
         self.fitted = False
         self.epsilon = epsilon
         self.return_nans = False
+        self.degree = degree
+        self.global_model = PolynomialRegression(degree=self.degree)
 
     def fit(self, x, y):
         self.__fit__(x=x, y=y, epsilon=self.epsilon, M=self.M)
@@ -32,7 +35,7 @@ class BMLR:
 
         # fit global model
         if self.substitution_policy == 'global':
-            self.lm_global.fit(x, y)
+            self.global_model.fit(x, y)
 
         for r_ in range(M):
             bm = BallMapper(points=x, coloring_df=pd.DataFrame(y), epsilon=epsilon, shuffle=True)
@@ -42,13 +45,12 @@ class BMLR:
                 if len(ball_pts_ind) >= self.cut:
                     x_ball = x[ball_pts_ind, :]
                     y_ball = y[ball_pts_ind]
-                    lm = ElasticNet().fit(x_ball, y_ball)
-                    bm.Graph.nodes[node_id]['beta'] = lm.coef_
-                    bm.Graph.nodes[node_id]['intercept'] = lm.intercept_
+                    model = PolynomialRegression(degree=self.degree)
+                    model.fit(x_ball, y_ball)
+                    bm.Graph.nodes[node_id]['model'] = model
                 else:
                     if self.substitution_policy == 'global':
-                        bm.Graph.nodes[node_id]['beta'] = self.lm_global.coef_
-                        bm.Graph.nodes[node_id]['intercept'] = self.lm_global.intercept_
+                        bm.Graph.nodes[node_id]['model'] = self.global_model
                     else:
                         # find nearest big ball
                         min_dist = np.Inf
@@ -76,9 +78,8 @@ class BMLR:
                         # join the points from big ball and query ball and fit the linear model
                         all_pts_ids = big_pts_ids + ball_pts_ind
                         #lm_big = LinearRegression().fit(x[all_pts_ids, :], y[all_pts_ids])
-                        lm_big = ElasticNet().fit(x[all_pts_ids, :], y[all_pts_ids])
-                        bm.Graph.nodes[node_id]['beta'] = lm_big.coef_
-                        bm.Graph.nodes[node_id]['intercept'] = lm_big.intercept_    
+                        model_big = PolynomialRegression(degree=self.degree).fit(x[all_pts_ids, :], y[all_pts_ids])
+                        bm.Graph.nodes[node_id]['model'] = model_big
 
     def predict(self, x_test):
         if not self.fitted:
@@ -94,13 +95,15 @@ class BMLR:
             ball_idxs = bm.find_balls(x_test, nearest_neighbour_extrapolation=True)
             # loop over balls to which all test points belongs, this is in fact loop over test points
             for pt_id, ball_idx in enumerate(ball_idxs):
-                xp = x_test[pt_id, :]
+                # https://stackoverflow.com/questions/3551242/numpy-index-slice-without-losing-dimension-information
+                xp = x_test[[pt_id], :]
                 if ball_idx[0] is not None:
                     # given test point can belong to many balls, loop over all of those
                     # each of these balls covers several points from the trainig set
                     # here we get a list of training points ids
                     for node_idx in ball_idx:
-                        yhat[pt_id] += np.matmul(bm.Graph.nodes[node_idx]['beta'], xp) + bm.Graph.nodes[node_idx]['intercept']
+                        yhat[pt_id] += bm.Graph.nodes[node_idx]['model'].predict(xp)
+                        #yhat[pt_id] += np.matmul(bm.Graph.nodes[node_idx]['beta'], xp) + bm.Graph.nodes[node_idx]['intercept']
                         counts[pt_id] += 1.0
                 else:
                     pass

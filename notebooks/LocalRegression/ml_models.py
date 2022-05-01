@@ -26,16 +26,16 @@ def model_random_forest(x, y, x_test, y_test, params):
     return score, mape, pred, model
 
 
-def model_bmlr_params(x, y, cut, M):
+def model_bmlr_params(x, y, cut, M, degree):
     epsilon_trial = (np.mean(np.std(x, axis=0))) / np.sqrt(x.shape[0]) * 3
     param_grid = {'epsilon': [epsilon_trial * x for x in [0.5, 0.8, 1.0, 1.5, 2.0, 2.5, 3.0]]}
-    bmlr = BMLR(cut=cut, M=M, substitution_policy='nearest')
+    bmlr = BMLR(cut=cut, M=M, substitution_policy='nearest', degree=degree)
     sh = HalvingGridSearchCV(bmlr, param_grid, cv=3, factor=3).fit(x, y)
     return sh.best_params_
 
 
-def model_bmlr(x, y, x_test, y_test, cut, M, params):
-    model = BMLR(cut=cut, M=M, substitution_policy='nearest', **params)
+def model_bmlr(x, y, x_test, y_test, cut, M, degree, params):
+    model = BMLR(cut=cut, M=M, substitution_policy='nearest', degree=degree, **params)
     model.fit(x, y)
     pred = model.predict(x_test)
     score = mean_squared_error(y_test, pred, squared=False)
