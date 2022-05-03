@@ -78,7 +78,8 @@ class BMLR:
                         # join the points from big ball and query ball and fit the linear model
                         all_pts_ids = big_pts_ids + ball_pts_ind
                         #lm_big = LinearRegression().fit(x[all_pts_ids, :], y[all_pts_ids])
-                        model_big = PolynomialRegression(degree=self.degree).fit(x[all_pts_ids, :], y[all_pts_ids])
+                        model_big = PolynomialRegression(degree=self.degree)
+                        model_big.fit(x[all_pts_ids, :], y[all_pts_ids])
                         bm.Graph.nodes[node_id]['model'] = model_big
 
     def predict(self, x_test):
