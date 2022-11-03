@@ -79,7 +79,7 @@ class BallMapper:
             )
             self.Graph.nodes[node]["color"] = "r"
 
-            for name, avg in coloring_df.loc[self.Graph.nodes[node]["points covered"]].mean().iteritems():
+            for name, avg in coloring_df.loc[self.Graph.nodes[node]["points covered"]].mean().items():
                 self.Graph.nodes[node][name] = avg
 
     def find_balls(self, points, nearest_neighbour_extrapolation=False):
