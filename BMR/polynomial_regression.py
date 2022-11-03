@@ -9,6 +9,7 @@ class PolynomialRegression:
     """
     Class for polynomial regression used by BMR
     """
+
     def __init__(self, degree, max_pca_components=None):
         """
 

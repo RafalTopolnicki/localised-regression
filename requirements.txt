@@ -8,8 +8,6 @@ networkx
 tqdm
 ipywidgets
 catboost
-ray
 Cython
-git+https://github.com/scikit-learn-contrib/py-earth@v0.2dev
 black
 statsmodels

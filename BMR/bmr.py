@@ -10,6 +10,7 @@ class BMR:
     """
     Class to represent BallMapperRegression
     """
+
     def __init__(self, epsilon, min_n_pts, M, substitution_policy="global", degree=1, max_pca_components=None):
         """
 
@@ -27,8 +28,8 @@ class BMR:
         self.epsilon = epsilon
         self.min_n_pts = min_n_pts
         self.M = M
-        if substitution_policy not in ['global', 'nearest']:
-            raise ValueError(f'Substitution policy {substitution_policy} not implemented')
+        if substitution_policy not in ["global", "nearest"]:
+            raise ValueError(f"Substitution policy {substitution_policy} not implemented")
         self.substitution_policy = substitution_policy
 
         self.npts = None  # number of points
@@ -88,9 +89,9 @@ class BMR:
                         if min_id is None:
                             # raise ValueError(f'All balls in BM contain less than {self.min_n_pts} points. '
                             #                  f'Reduce value of min_pts parameter')
-                            #print(f'Warning. All balls in BM contain less than {self.min_n_pts} points. '
+                            # print(f'Warning. All balls in BM contain less than {self.min_n_pts} points. '
                             #      f'Reduce value of min_pts parameter by approx 20% to {int(self.min_n_pts*0.8)}')
-                            self.min_n_pts = int(self.min_n_pts*0.8)
+                            self.min_n_pts = int(self.min_n_pts * 0.8)
                             self.fit(x, y)
                             break
                         big_pts_ids = bm.Graph.nodes[min_id]["points covered"]
@@ -106,7 +107,7 @@ class BMR:
         if not self.fitted:
             raise ValueError("Cannot run predict(). Run fit() first")
 
-        npts_test = x_test.shape[0] # number of test points
+        npts_test = x_test.shape[0]  # number of test points
         yhat = np.zeros(npts_test)
         counts = np.zeros(npts_test)
         # iterate over all mappers
