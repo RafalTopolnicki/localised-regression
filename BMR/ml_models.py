@@ -101,7 +101,7 @@ def get_mars_model(x, y, x_test, y_test, params, scaler):
 
 def run_methods(X_train, y_train, X_test, y_test, std_scaler_y):
     # run bmr: deg1
-    bmr_M = 4
+    bmr_M = 10
     bmr1_params = get_bmr_params(X_train, y_train, M=bmr_M, degree=1)
     score_bmr1, mape_bmr1, pred_bmr1, model_bmr1 = get_bmr_model(
         X_train, y_train, X_test, y_test, M=bmr_M, degree=1, params=bmr1_params, scaler=std_scaler_y
@@ -121,7 +121,7 @@ def run_methods(X_train, y_train, X_test, y_test, std_scaler_y):
     # run bmr: deg4
     bmr4_params = get_bmr_params(X_train, y_train, M=bmr_M, degree=4)
     score_bmr4, mape_bmr4, pred_bmr4, model_bmr4 = get_bmr_model(
-        X_train, y_train, X_test, y_test, M=bmr_M, degree=4, params=bmr2_params, scaler=std_scaler_y
+        X_train, y_train, X_test, y_test, M=bmr_M, degree=4, params=bmr4_params, scaler=std_scaler_y
     )
 
     # run randomforest
