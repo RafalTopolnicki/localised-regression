@@ -16,10 +16,11 @@ def model_random_forest_params(x, y):
     return sh.best_params_
 
 
-def model_random_forest(x, y, x_test, y_test, params):
+def model_random_forest(x, y, x_test, y_test, params, scaler):
     model = RandomForestRegressor(**params)
     model.fit(x, y)
-    pred = model.predict(x_test)
+    pred_sc = model.predict(x_test)
+    pred = scaler.inverse_transform(pred_sc.reshape(-1, 1))
     score = mean_squared_error(y_test, pred, squared=False)
     mape = mean_absolute_percentage_error(y_test, pred)
     return score, mape, pred, model
@@ -42,12 +43,13 @@ def model_bmlr(x, y, x_test, y_test, cut, M, degree, params):
     return score, mape, pred, model
 
 
-def model_catboost(x, y, x_test, y_test):
+def model_catboost(x, y, x_test, y_test, scaler):
     train_dataset = cb.Pool(x, y)
     test_dataset = cb.Pool(x_test, y_test)
     model = cb.CatBoostRegressor(loss_function="RMSE", verbose=0)
     model.fit(train_dataset)
-    pred = model.predict(test_dataset)
+    pred_sc = model.predict(test_dataset)
+    pred = scaler.inverse_transform(pred_sc.reshape(-1, 1))
     score = mean_squared_error(y_test, pred, squared=False)
     mape = mean_absolute_percentage_error(y_test, pred)
     return score, mape, pred, model
@@ -60,10 +62,11 @@ def model_svr_params(x, y):
     return sh.best_params_
 
 
-def model_svr(x, y, x_test, y_test, params):
+def model_svr(x, y, x_test, y_test, params, scaler):
     model = SVR(kernel="rbf", **params)
     model.fit(x, y)
-    pred = model.predict(x_test)
+    pred_sc = model.predict(x_test)
+    pred = scaler.inverse_transform(pred_sc.reshape(-1, 1))
     score = mean_squared_error(y_test, pred, squared=False)
     mape = mean_absolute_percentage_error(y_test, pred)
     return score, mape, pred, model
@@ -76,10 +79,33 @@ def model_mars_params(x, y):
     return sh.best_params_
 
 
-def model_mars(x, y, x_test, y_test, params):
+def model_mars(x, y, x_test, y_test, params, scaler):
     model = Earth(**params)
     model.fit(x, y)
-    pred = model.predict(x_test)
+    pred_sc = model.predict(x_test)
+    pred = scaler.inverse_transform(pred_sc.reshape(-1, 1))
     score = mean_squared_error(y_test, pred, squared=False)
     mape = mean_absolute_percentage_error(y_test, pred)
     return score, mape, pred, model
+
+def run_ml_methods(X, y, X_test, y_test, std_scaler_y):
+    # run randomforest
+    rf_params = model_random_forest_params(X, y)
+    opt_score_rf, opt_mape_rf, opt_pred_rf, opt_model_rf = model_random_forest(X, y, X_test, y_test,
+                                                                               params=rf_params,
+                                                                               scaler=std_scaler_y)
+    # run SVR
+    svr_params = model_svr_params(X, y)
+    opt_score_svr, opt_mape_svr, opt_pred_svr, opt_model_svr = model_svr(X, y, X_test, y_test,
+                                                                         params=svr_params,
+                                                                         scaler=std_scaler_y)
+    # run MARS
+    mars_params = model_mars_params(X, y)
+    opt_score_mars, opt_mape_mars, opt_pred_mars, opt_model_mars = model_mars(X, y, X_test, y_test,
+                                                                         params=mars_params,
+                                                                         scaler=std_scaler_y)
+    # run CatBoost
+    opt_score_cb, opt_mape_cb, opt_pred_cb, opt_model_cb = model_catboost(X, y, X_test, y_test,
+                                                                         scaler=std_scaler_y)
+    return [opt_score_rf, opt_score_svr, opt_score_mars, opt_score_cb,
+            opt_mape_rf, opt_mape_svr, opt_mape_mars, opt_mape_cb]
