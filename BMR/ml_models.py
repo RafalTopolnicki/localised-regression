@@ -152,7 +152,7 @@ def run_method(method, X, y, mcloops=1, test_size=0.2, bmr_M=10):
         # build models
         if method == 'rf':
             score, mape, pred, model = get_rf_model(X_train_scaled, y_train_scaled, X_test_scaled,
-                                                    y_test, params, scaler=std_scaler_y)
+                                                    y_test_scaled, params, scaler=std_scaler_y)
         if method == 'svr':
             score, mape, pred, model = get_svr_model(X_train_scaled, y_train_scaled, X_test_scaled,
                                                      y_test_scaled, params, scaler=std_scaler_y)
