@@ -21,8 +21,8 @@ class PolynomialRegression:
         self.max_pca_components = max_pca_components
 
         self._poly_features = PolynomialFeatures(degree=degree)
-        self._model = ElasticNet(alpha=0.001, max_iter=10000)  # this is just to avid super large coeff estimates for ties
-        # self._model = LinearRegression()
+        #self._model = ElasticNet(alpha=0.001, max_iter=10000)  # this is just to avid super large coeff estimates for ties
+        self._model = LinearRegression()
         self._pca = None
 
     def fit(self, x, y):
