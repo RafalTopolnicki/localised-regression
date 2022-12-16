@@ -42,6 +42,7 @@ def get_bmr_params(x, y, M, degree):
         "epsilon": [epsilon_trial * t for t in [0.5, 0.8, 1.0, 1.5, 2.0, 2.5, 3.0]],
         "min_n_pts": [int(n_trial * t) for t in [0.01, 0.05, 0.1, 0.2, 0.3]],
     }
+    print(param_grid)
     bmr = BMR(min_n_pts=n_trial / 10, M=M, substitution_policy="nearest", degree=degree, epsilon=epsilon_trial)
     sh = HalvingGridSearchCV(bmr, param_grid, cv=3, factor=3, n_jobs=-1).fit(x, y)
     return sh.best_params_
