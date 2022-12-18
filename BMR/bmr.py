@@ -133,6 +133,32 @@ class BMR:
         yhat /= counts
         return yhat
 
+    def bmr_coefficients(self, points):
+        coeffs = []
+        intercepts = []
+
+        for mapper in self.ball_mappers:
+            # for each mapper find balls to which each point belongs
+            points_balls = mapper.find_balls(points, nearest_neighbour_extrapolation=True)
+            coeffs_mapper = []
+            intercepts_mapper = []
+
+            for node_ids, point in zip(points_balls, points):
+                point_coeffs = []
+                point_intercepts = []
+                for node_id in node_ids:
+                    point_coeffs.append(mapper.Graph.nodes[node_id]['model']._model.coef_[0, :])
+                    point_intercepts.append(mapper.Graph.nodes[node_id]['model']._model.intercept_)
+                coeffs_mapper.append(np.mean(point_coeffs, axis=0))
+                intercepts_mapper.append(np.mean(point_intercepts))
+
+            coeffs.append(coeffs_mapper)
+            intercepts.append(intercepts_mapper)
+
+        coeffs = np.mean(coeffs, axis=0)
+        intercepts = np.mean(intercepts, axis=0)
+        return coeffs, intercepts
+
     def get_params(self, deep=True):
         out = dict()
         out["epsilon"] = self.epsilon
