@@ -133,7 +133,7 @@ class BMR:
         yhat /= counts
         return yhat
 
-    def bmr_coefficients(self, points):
+    def coefficients(self, points):
         coeffs = []
         intercepts = []
 
