@@ -21,7 +21,7 @@ class BMR:
     Class to represent BallMapperRegression
     """
 
-    def __init__(self, epsilon, min_n_pts, M, substitution_policy="global", degree=1,
+    def __init__(self, epsilon, min_n_pts, M, substitution_policy="nearest", degree=1,
                  standard_scaler = False, max_pca_components=None):
         """
 
@@ -116,6 +116,9 @@ class BMR:
                         model_big = PolynomialRegression(degree=self.degree, max_pca_components=self.max_pca_components)
                         model_big.fit(xscaled[all_pts_ids, :], y[all_pts_ids])
                         bm.Graph.nodes[node_id]["model"] = model_big
+                        bm.Graph.nodes[node_id]["points covered"] = all_pts_ids
+                        bm.Graph.nodes[node_id]["size"] = len(all_pts_ids)
+                        bm.Graph.nodes[node_id]["merged"] = min_id
         # set flag that BMLR was fitted aready
         self.fitted = True
 
@@ -177,6 +180,22 @@ class BMR:
         coeffs = np.mean(coeffs, axis=0)
         intercepts = np.mean(intercepts, axis=0)
         return coeffs, intercepts
+
+    def summary(self):
+        print(f'Number of balls: {[len(bm.vertices) for bm in self.ball_mappers]}')
+        for bm_id, bm in enumerate(self.ball_mappers):
+            print(f'Mapper {bm_id}')
+            for node_id in bm.Graph.nodes:
+                beta = bm.Graph.nodes[node_id]['model']._model.coef_[0, :]
+                intercept = bm.Graph.nodes[node_id]['model']._model.intercept_
+                merged = False
+                if 'merged' in bm.Graph.nodes[node_id]:
+                    merged = bm.Graph.nodes[node_id]['merged']
+                print(f'BM={bm_id} node={node_id} #points {bm.Graph.nodes[node_id]["size"]}, '
+                      f'pos={bm.vertices_pos[node_id]}, '
+                      f'beta={beta}, '
+                      f'intercept={intercept[0]}, merged={merged}')
+
 
     def get_params(self, deep=True):
         out = dict()
