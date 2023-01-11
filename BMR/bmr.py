@@ -2,16 +2,27 @@ import numpy as np
 import pandas as pd
 
 from sklearn.metrics import mean_squared_error
+from sklearn.preprocessing import StandardScaler
 from .ballmapper import BallMapper
 from .polynomial_regression import PolynomialRegression
 
+class FakeScaler:
+    def __init__(self):
+        pass
+    def fit(self, x):
+        pass
+    def transform(self, x):
+        return x
+    def fit_transform(self, x):
+        return x
 
 class BMR:
     """
     Class to represent BallMapperRegression
     """
 
-    def __init__(self, epsilon, min_n_pts, M, substitution_policy="global", degree=1, max_pca_components=None):
+    def __init__(self, epsilon, min_n_pts, M, substitution_policy="global", degree=1,
+                 standard_scaler = False, max_pca_components=None):
         """
 
         :param epsilon: radius of epsilon net
@@ -39,30 +50,35 @@ class BMR:
         self.fitted = False
         self.return_nans = False
         self.degree = degree
+        if standard_scaler:
+            self.scaler = StandardScaler()
+        else:
+            self.scaler = FakeScaler()
         self.max_pca_components = max_pca_components
         self.global_model = PolynomialRegression(degree=self.degree)
 
-    def fit(self, x, y):
-        self.__fit__(x=x, y=y)
 
-    def __fit__(self, x, y):
+    def fit(self, x, y):
         self.npts = x.shape[0]  # number of points
         self.dpts = x.shape[1]  # dimension of points
         self.ball_mappers = []
 
+        # scale data
+        xscaled = self.scaler.fit_transform(x)
+
         # fit global model
         if self.substitution_policy == "global":
-            self.global_model.fit(x, y)
+            self.global_model.fit(xscaled, y)
 
         for loop_id in range(self.M):
-            bm = BallMapper(points=x, coloring_df=pd.DataFrame(y), epsilon=self.epsilon, shuffle=True)
+            bm = BallMapper(points=xscaled, coloring_df=pd.DataFrame(y), epsilon=self.epsilon, shuffle=True)
             self.ball_mappers.append(bm)
 
             for node_id in bm.Graph.nodes:
                 ball_pts_ind = bm.Graph.nodes[node_id]["points covered"]
                 # if given ball covers more than min_n_pts points simply build the regression model inside
                 if len(ball_pts_ind) >= self.min_n_pts:
-                    x_ball = x[ball_pts_ind, :]
+                    x_ball = xscaled[ball_pts_ind, :]
                     y_ball = y[ball_pts_ind]
                     model = PolynomialRegression(degree=self.degree, max_pca_components=self.max_pca_components)
                     model.fit(x_ball, y_ball)
@@ -77,11 +93,11 @@ class BMR:
                         # find the nearest big ball containing at least min_n_pts points inside
                         min_dist = np.Inf
                         min_id = None
-                        small_ball_location = np.mean(x[ball_pts_ind, :], axis=0)
+                        small_ball_location = np.mean(xscaled[ball_pts_ind, :], axis=0)
                         for big_node_id in bm.Graph.nodes:
                             big_pts_ids = bm.Graph.nodes[big_node_id]["points covered"]
                             if len(big_pts_ids) >= self.min_n_pts:
-                                big_ball_location = np.mean(x[big_pts_ids, :], axis=0)
+                                big_ball_location = np.mean(xscaled[big_pts_ids, :], axis=0)
                                 dist = np.linalg.norm(small_ball_location - big_ball_location)
                                 if dist < min_dist:
                                     min_dist = dist
@@ -98,7 +114,7 @@ class BMR:
                         # join the points from big ball and query ball and fit the linear model
                         all_pts_ids = big_pts_ids + ball_pts_ind
                         model_big = PolynomialRegression(degree=self.degree, max_pca_components=self.max_pca_components)
-                        model_big.fit(x[all_pts_ids, :], y[all_pts_ids])
+                        model_big.fit(xscaled[all_pts_ids, :], y[all_pts_ids])
                         bm.Graph.nodes[node_id]["model"] = model_big
         # set flag that BMLR was fitted aready
         self.fitted = True
@@ -107,18 +123,21 @@ class BMR:
         if not self.fitted:
             raise ValueError("Cannot run predict(). Run fit() first")
 
-        npts_test = x_test.shape[0]  # number of test points
+        # scale data first
+        x_test_scaled = self.scaler.transform(x_test)
+
+        npts_test = x_test_scaled.shape[0]  # number of test points
         yhat = np.zeros(npts_test)
         counts = np.zeros(npts_test)
         # iterate over all mappers
         for bm in self.ball_mappers:
             # get a list of nodes to which all test points belong
             # for each point a list of nodes ids is returned
-            ball_idxs = bm.find_balls(x_test, nearest_neighbour_extrapolation=True)
+            ball_idxs = bm.find_balls(x_test_scaled, nearest_neighbour_extrapolation=True)
             # loop over balls to which all test points belong, this is in fact loop over test points
             for pt_id, ball_idx in enumerate(ball_idxs):
                 # get slice but keep information about dimension
-                xp = x_test[[pt_id], :]
+                xp = x_test_scaled[[pt_id], :]
                 if ball_idx[0] is not None:
                     # given test point can belong to many balls, loop over all of those
                     # each of these balls covers several points from the trainig set
