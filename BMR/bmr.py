@@ -235,7 +235,7 @@ class BMR:
         out["M"] = self.M
         out["substitution_policy"] = self.substitution_policy
         out["min_n_pts"] = self.min_n_pts
-        out['in_balls_model'] = self.in_ball_model
+        out['in_ball_model'] = self.in_ball_model
         return out
 
     def set_params(self, **params):
