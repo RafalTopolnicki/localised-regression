@@ -5,6 +5,12 @@ from sklearn.preprocessing import StandardScaler
 from .ballmapper import BallMapper
 from .polynomial_regression import PolynomialRegression
 
+import sys
+
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
+    #print(*args, file='dupa.err', **kwargs)
+
 class FakeScaler:
     def __init__(self):
         pass
@@ -244,5 +250,8 @@ class BMR:
         return self
 
     def score(self, x, y):
+        with open('dupa.err', 'a') as file:
+            file.write(f'SCORE: {x.shape}\n')
+        file.close()
         yhat = self.predict(x)
         return mean_squared_error(yhat, y, squared=False)

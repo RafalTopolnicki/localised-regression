@@ -37,13 +37,6 @@ class BallMapper:
                                                }
                 centers_counter += 1
 
-        # # compute points_covered_by_landmarks
-        # for idx_b in self.balls.keys():
-        #     for idx_p in order:
-        #         distance = np.linalg.norm(points[idx_p] - self.balls[idx_b]['position'])
-        #         if distance <= self.epsilon:
-        #             self.balls[idx_b]['points_covered'].append(idx_p)
-
 
     def find_balls(self, points, nearest_neighbour_extrapolation=False):
         """
