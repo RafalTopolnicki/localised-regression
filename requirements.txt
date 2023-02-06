@@ -3,10 +3,7 @@ pandas
 jupyterlab
 scipy
 matplotlib
-networkx
-tqdm
 ipywidgets
-catboost
 Cython
 black
 statsmodels
