@@ -2,6 +2,7 @@ import numpy as np
 
 from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import r2_score
 from .ballmapper import BallMapper
 from .polynomial_regression import PolynomialRegression
 
@@ -251,4 +252,5 @@ class BMR:
 
     def score(self, x, y):
         yhat = self.predict(x)
-        return mean_squared_error(yhat, y, squared=False)
+        return r2_score(y, yhat)
+        #return -mean_squared_error(yhat, y, squared=False)
