@@ -21,3 +21,5 @@ do
     done
 done
 done
+
+parallel --jobs 8 < $jobsfile
