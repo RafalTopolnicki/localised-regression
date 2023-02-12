@@ -1,0 +1,12 @@
+https://medium.com/codex/python-version-management-with-pyenv-and-pyenv-virtualenv-linux-ecd6578b7bbf
+https://github.com/scikit-learn-contrib/py-earth/issues/221
+https://stackoverflow.com/questions/66503039/how-to-install-pyearth-in-google-colab
+https://levelup.gitconnected.com/fix-attributeerror-module-numpy-has-no-attribute-float-d7d68c5a4971
+
+in pyearth
+sed -i 's/exc_type/curexc_type/g' *.c 
+sed -i 's/exc_value/curexc_value/g' *.c 
+sed -i 's/exc_traceback/curexc_traceback/g' *c
+sed -i 's/curcurexc_type/curexc_type/g' *.c 
+sed -i 's/curcurexc_value/curexc_value/g' *.c 
+sed -i  's/curcurexc_traceback/curexc_traceback/g' *.c
