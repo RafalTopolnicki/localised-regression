@@ -46,8 +46,11 @@ def get_svr_params(x, y):
 
 def get_bmr_params(x, y, M, degree, substitution_policy="nearest", in_ball_model='linear'):
     n_pts = x.shape[0]
+    min_pts = 4
+    if degree == 2:
+        min_pts = 10
     epsilons = [0.1, 0.25, 0.5, 0.75, 1.0, 1.5, 2.0]
-    min_n_pts = [max(int(n_pts*np.pi*(2*e)**2/(8*8)), 4) for e in epsilons]
+    min_n_pts = [max(int(n_pts*np.pi*(2*e)**2/(8*8)), min_pts) for e in epsilons]
     param_grid = {
         "epsilon": epsilons,
         "min_n_pts": min_n_pts,
