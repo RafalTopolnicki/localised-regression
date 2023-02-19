@@ -15,7 +15,7 @@ do
       do
         echo "python ${scriptname} --method ${method} --n $n --a 2 --b 0 --c 0 --eps $eps --M 1000 --X $X --mode $mode" >> $jobsfile
         echo "python ${scriptname} --method ${method} --n $n --a 2 --b 1 --c 0 --eps $eps --M 1000 --X $X --mode $mode" >> $jobsfile
-        echo "python ${scriptname} s--method ${method} --n $n --a 2 --b 0 --c 1 --eps $eps --M 1000 --X $X --mode $mode" >> $jobsfile
+        echo "python ${scriptname} --method ${method} --n $n --a 2 --b 0 --c 1 --eps $eps --M 1000 --X $X --mode $mode" >> $jobsfile
         echo "python ${scriptname} --method ${method} --n $n --a 0 --b 1 --c 0 --eps $eps --M 1000 --X $X --mode $mode" >> $jobsfile
         echo "python ${scriptname} --method ${method} --n $n --a 0 --b 0 --c 1 --eps $eps --M 1000 --X $X --mode $mode" >> $jobsfile
         echo "python ${scriptname} --method ${method} --n $n --a 2 --b 0.5 --c 0.25 --eps $eps --M 1000 --X $X --mode $mode" >> $jobsfile
