@@ -18,7 +18,6 @@ import pandas as pd
 N_JOBS = 1
 
 def gen_model(X, a, b, c):
-    #return a*X[:, 0] + b*X[:, 0]**2 + c*X[:, 0]**3
     return a * X + b * X ** 2 + c * X ** 3
 
 def gen_data(n, a, b, c, eps):
@@ -164,11 +163,12 @@ def run_experiment(args):
     dat = np.array(results).transpose()
     ci_low = np.quantile(dat, q=alpha/2, axis=1)
     ci_up = np.quantile(dat, q=1-alpha/2, axis=1)
+    ci_mid = np.quantile(dat, q=0.5, axis=1)
+    ci_mean = np.mean(dat, axis=1)
     mse = np.mean((dat - y_true.reshape(-1,1))**2, axis=1)
-    df = pd.DataFrame([ci_low, ci_up, ci_up-ci_low, mse]).transpose()
-    df.columns = [f'{method_label}_CI_low', f'{method_label}_CI_up', f'{method_label}_CI_len', f'{method_label}_MSE']
+    df = pd.DataFrame([ci_mean, ci_mid, ci_low, ci_up, ci_up-ci_low, mse]).transpose()
+    df.columns = [f'{method_label}_CI_mean', f'{method_label}_CI_mid', f'{method_label}_CI_low', f'{method_label}_CI_up', f'{method_label}_CI_len', f'{method_label}_MSE']
     dfs.append(df)
-    # add DataFrame containing coefficients
     if method_label in ['BMR1', 'BMR2', 'LR']:
         dfs.append(pd.DataFrame(coeff))
     df = pd.concat(dfs, axis=1)
