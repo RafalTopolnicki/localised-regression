@@ -93,6 +93,8 @@ def run_experiment(args):
         params, cv_results = get_svr_params(X, y[:, 0])
     if method_label == 'MARS':
         params, cv_results = get_mars_params(X, y[:, 0])
+    if method_label = 'MARSdef':
+        params, cv_results = None, None
     if method_label == 'LR':
         params, cv_results = None, None
     # save params to file
@@ -115,6 +117,9 @@ def run_experiment(args):
             method.fit(X, y[:, 0])
         if method_label == 'MARS':
             method = Earth(**params)
+            method.fit(X, y)
+        if method_label == 'MARSdef':
+            method = Earth()
             method.fit(X, y)
         if method_label == 'LR':
             method = LinearRegression()
