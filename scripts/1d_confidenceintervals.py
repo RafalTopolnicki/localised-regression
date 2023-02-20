@@ -91,6 +91,8 @@ def run_experiment(args):
         params, cv_results = get_bmr_params(X, y, M=5, degree=2, substitution_policy=substitution_policy)
     if method_label == 'SVR':
         params, cv_results = get_svr_params(X, y[:, 0])
+    if method_label == 'SVRdef':
+        params, cv_results = None, None
     if method_label == 'MARS':
         params, cv_results = get_mars_params(X, y[:, 0])
     if method_label == 'MARSdef':
@@ -114,6 +116,9 @@ def run_experiment(args):
             method.fit(X, y)
         if method_label == 'SVR':
             method = SVR(**params)
+            method.fit(X, y[:, 0])
+        if method_label == 'SVRdef':
+            method = SVR()
             method.fit(X, y[:, 0])
         if method_label == 'MARS':
             method = Earth(**params)
@@ -180,7 +185,7 @@ def run_experiment(args):
     df.to_csv(filename_csv, index=False)
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--method", choices=['BMR1', 'BMR2', 'LR', 'SVR', 'MARS', 'MARSdef'], required=True, help="which method to use")
+parser.add_argument("--method", choices=['BMR1', 'BMR2', 'LR', 'SVR', 'MARS', 'MARSdef', 'SVRdef'], required=True, help="which method to use")
 parser.add_argument("--n", type=int, required=True, help="sample size")
 parser.add_argument("--a", type=float, required=True, help="param a")
 parser.add_argument("--b", type=float, required=True, help="param b")
