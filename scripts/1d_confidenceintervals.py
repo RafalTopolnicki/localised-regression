@@ -180,7 +180,7 @@ def run_experiment(args):
     df.to_csv(filename_csv, index=False)
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--method", choices=['BMR1', 'BMR2', 'LR', 'SVR', 'MARS'], required=True, help="which method to use")
+parser.add_argument("--method", choices=['BMR1', 'BMR2', 'LR', 'SVR', 'MARS', 'MARSdef'], required=True, help="which method to use")
 parser.add_argument("--n", type=int, required=True, help="sample size")
 parser.add_argument("--a", type=float, required=True, help="param a")
 parser.add_argument("--b", type=float, required=True, help="param b")
