@@ -83,7 +83,7 @@ def run_experiment(args):
     if method_label == 'SVRdef':
         params, cv_results = None, None
     if method_label == 'MARS':
-        params, cv_results = get_mars_params(X, y[:, 0])
+        params, cv_results = get_mars_params(X, y)
     if method_label == 'MARSdef':
         params, cv_results = None, None
     if method_label == 'LR':
