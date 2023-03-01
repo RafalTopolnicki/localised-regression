@@ -79,7 +79,7 @@ def run_experiment(args):
     if method_label == 'BMR2':
         params, cv_results = get_bmr_params(X, y, M=10, degree=2, substitution_policy=substitution_policy)
     if method_label == 'SVR':
-        params, cv_results = get_svr_params(X, y[:, 0])
+        params, cv_results = get_svr_params(X, y)
     if method_label == 'SVRdef':
         params, cv_results = None, None
     if method_label == 'MARS':
