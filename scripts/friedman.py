@@ -104,10 +104,10 @@ def run_experiment(args):
             method.fit(X_train, y_train)
         if method_label == 'SVR':
             method = SVR(**params)
-            method.fit(X_train, y_train[:, 0])
+            method.fit(X_train, y_train)
         if method_label == 'SVRdef':
             method = SVR()
-            method.fit(X_train, y_train[:, 0])
+            method.fit(X_train, y_train)
         if method_label == 'MARS':
             method = Earth(**params)
             method.fit(X_train, y_train)
