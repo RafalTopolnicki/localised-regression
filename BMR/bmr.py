@@ -60,7 +60,8 @@ class BMR:
         self.fitted = False
         self.return_nans = False
         self.degree = degree
-        if standard_scaler:
+        self.standard_scaler = standard_scaler
+        if self.standard_scaler:
             self.scaler = StandardScaler()
         else:
             self.scaler = FakeScaler()
@@ -243,6 +244,7 @@ class BMR:
         out["substitution_policy"] = self.substitution_policy
         out["min_n_pts"] = self.min_n_pts
         out['in_ball_model'] = self.in_ball_model
+        out['standard_scaler'] = self.standard_scaler
         return out
 
     def set_params(self, **params):
