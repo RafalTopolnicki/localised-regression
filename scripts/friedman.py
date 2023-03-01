@@ -102,7 +102,6 @@ def run_experiment(args):
         if method_label in ['BMR1', 'BMR2']:
             method = BMR(**params)
             method.fit(X_train, y_train)
-            method.summary()
         if method_label == 'SVR':
             method = SVR(**params)
             method.fit(X_train, y_train[:, 0])
