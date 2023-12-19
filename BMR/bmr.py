@@ -90,50 +90,49 @@ class BMR:
                     # represent regression inside the ball
                     mapper.balls[ball_id]['model'] = self.global_model
                     mapper.balls[ball_id]['merged'] = 'global'
-                self.ball_mappers.append(mapper)
+            self.ball_mappers.append(mapper)
 
     def __fit_nearest(self, xscaled, y):
         # iterate over the averaging
         for loop_id in range(self.M):
-            mapper = BallMapper(points=xscaled, epsilon=self.epsilon, shuffle=True)
+            mapper = BallMapper(points=xscaled, epsilon=self.epsilon, shuffle=False)
             self.ball_mappers.append(mapper)
             # go through all balls and merge those which are too small
             for ball_id, ball in mapper.balls.items():
                 ball_pts_ind = ball['points_covered']
                 n_ball_pts = len(ball_pts_ind)
                 if n_ball_pts >= self.min_n_pts:
-                    pass
-                else:
-                    # iterate over all balls and merge
-                    # find the nearest big ball containing at least min_n_pts points inside
-                    min_dist = np.Inf
-                    min_id = None
-                    small_ball_position = ball['position']
-                    # # FIXME: we don't need to go through all balls. Use KNN instead
-                    # # FIXME: or sort the distances first as number of balls is in most cases moderate
-                    for big_ball_id in mapper.balls:
-                        # do not merge ball with itself
-                        if ball_id != big_ball_id:
-                            big_pts_ids = mapper.balls[big_ball_id]['points_covered']
-                            if len(big_pts_ids) + n_ball_pts >= self.min_n_pts:
-                                big_ball_position = mapper.balls[big_ball_id]['position']
-                                dist = np.linalg.norm(small_ball_position - big_ball_position)
-                                if dist < min_dist:
-                                    min_dist = dist
-                                    min_id = big_ball_id
-                    if min_id is None:
-                        raise ValueError(f'All balls in BM contain less than {self.min_n_pts} points. '
-                                         f'Reduce value of min_pts parameter or increase radius.')
-                    big_pts_ids = mapper.balls[min_id]['points_covered']
-                    # join the points from big ball and small ball
-                    all_pts_ids = big_pts_ids + ball_pts_ind
-                    # update two balls
-                    # update small ball
-                    mapper.balls[ball_id]['merged'].append(min_id)
-                    mapper.balls[ball_id]['points_covered'] = all_pts_ids
-                    # update big ball
-                    mapper.balls[min_id]['merged'].append(ball_id)
-                    mapper.balls[min_id]['points_covered'] = all_pts_ids
+                    continue
+                # iterate over all balls and merge
+                # find the nearest big ball containing at least min_n_pts points inside
+                min_dist = np.Inf
+                min_id = None
+                small_ball_position = ball['position']
+                # # FIXME: we don't need to go through all balls. Use KNN instead
+                # # FIXME: or sort the distances first as number of balls is in most cases moderate
+                for big_ball_id in mapper.balls:
+                    # do not merge ball with itself
+                    if ball_id != big_ball_id:
+                        big_pts_ids = mapper.balls[big_ball_id]['points_covered']
+                        if len(big_pts_ids) + n_ball_pts >= self.min_n_pts:
+                            big_ball_position = mapper.balls[big_ball_id]['position']
+                            dist = np.linalg.norm(small_ball_position - big_ball_position)
+                            if dist < min_dist:
+                                min_dist = dist
+                                min_id = big_ball_id
+                if min_id is None:
+                    raise ValueError(f'Cannot merge one of balls so that resulting call contain >= {self.min_n_pts} points. '
+                                     f'Reduce value of min_pts parameter or increase radius.')
+                big_pts_ids = mapper.balls[min_id]['points_covered']
+                # join the points from big ball and small ball
+                all_pts_ids = big_pts_ids + ball_pts_ind
+                # update two balls
+                # update small ball
+                mapper.balls[ball_id]['merged'].append(min_id)
+                mapper.balls[ball_id]['points_covered'] = all_pts_ids
+                # update big ball
+                mapper.balls[min_id]['merged'].append(ball_id)
+                mapper.balls[min_id]['points_covered'] = all_pts_ids
             # end ball merge
             # go through all balls and build models
             for ball_id, ball in mapper.balls.items():

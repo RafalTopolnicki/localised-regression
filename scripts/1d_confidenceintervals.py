@@ -2,7 +2,6 @@ import argparse
 import pickle
 import sys
 
-import numpy as np
 import scipy.stats as ss
 from sklearn.linear_model import LinearRegression
 from sklearn.experimental import enable_halving_search_cv  # noqa
