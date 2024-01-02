@@ -1,16 +1,11 @@
 import numpy as np
 
-from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import r2_score
+from sklearn.metrics import r2_score, mean_squared_error
 from .ballmapper import BallMapper
 from .polynomial_regression import PolynomialRegression
 
 import sys
-
-def eprint(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)
-    #print(*args, file='dupa.err', **kwargs)
 
 class FakeScaler:
     def __init__(self):
@@ -27,18 +22,14 @@ class BMR:
     Class to represent BallMapperRegression
     """
 
-    def __init__(self, epsilon, min_n_pts, M, substitution_policy="nearest", degree=1,
-                 standard_scaler = False, max_pca_components=None,
+    def __init__(self, epsilon, min_n_pts, M, degree=1, standard_scaler = False,
+                 max_pca_components=None,
                  in_ball_model='linear'):
         """
 
         :param epsilon: radius of epsilon net
         :param min_n_pts: minimal number of points required inside each ball
         :param M: number of constructed BallMapper graphs
-        :param substitution_policy: what to do when number of points inside a ball is < min_n_pts
-                options are:
-                'global': use global model
-                'nearest': merge small ball with other nearest ball
         :param degree: degree of polynomial used to construct the regression models inside a ball
         :param max_pca_components: max number of PCA components determined in each ball.
                 Use 'None' if PCA should not be performed
@@ -49,16 +40,11 @@ class BMR:
         self.epsilon = epsilon
         self.min_n_pts = min_n_pts
         self.M = M
-        if substitution_policy not in ["global", "nearest"]:
-            raise ValueError(f"Substitution policy {substitution_policy} not implemented")
-        self.substitution_policy = substitution_policy
 
         self.npts = None  # number of points
         self.dpts = None  # dimensionality of the point data
         self.ball_mappers = []  # list of Ball Mappers
-        self.in_sample_remse = None
         self.fitted = False
-        self.return_nans = False
         self.degree = degree
         self.standard_scaler = standard_scaler
         if self.standard_scaler:
@@ -68,8 +54,13 @@ class BMR:
         self.max_pca_components = max_pca_components
         self.global_model = PolynomialRegression(degree=self.degree, in_ball_model=in_ball_model)
 
+    def fit(self, x, y):
+        self.npts = x.shape[0]  # number of points
+        self.dpts = x.shape[1]  # dimension of points
+        self.ball_mappers = []
 
-    def __fit_global(self, xscaled, y):
+        # scale data
+        xscaled = self.scaler.fit_transform(x)
         self.global_model.fit(xscaled, y)
         # iterate over the averaging
         for loop_id in range(self.M):
@@ -88,76 +79,8 @@ class BMR:
                 else:
                     # in global mode, a global model (i.e. one trained on whole data) set is used to
                     # represent regression inside the ball
-                    mapper.balls[ball_id]['model'] = self.global_model
-                    mapper.balls[ball_id]['merged'] = 'global'
+                    mapper.balls[ball_id]['model'] = None
             self.ball_mappers.append(mapper)
-
-    def __fit_nearest(self, xscaled, y):
-        # iterate over the averaging
-        for loop_id in range(self.M):
-            mapper = BallMapper(points=xscaled, epsilon=self.epsilon, shuffle=False)
-            self.ball_mappers.append(mapper)
-            # go through all balls and merge those which are too small
-            for ball_id, ball in mapper.balls.items():
-                ball_pts_ind = ball['points_covered']
-                n_ball_pts = len(ball_pts_ind)
-                if n_ball_pts >= self.min_n_pts:
-                    continue
-                # iterate over all balls and merge
-                # find the nearest big ball containing at least min_n_pts points inside
-                min_dist = np.Inf
-                min_id = None
-                small_ball_position = ball['position']
-                # # FIXME: we don't need to go through all balls. Use KNN instead
-                # # FIXME: or sort the distances first as number of balls is in most cases moderate
-                for big_ball_id in mapper.balls:
-                    # do not merge ball with itself
-                    if ball_id != big_ball_id:
-                        big_pts_ids = mapper.balls[big_ball_id]['points_covered']
-                        if len(big_pts_ids) + n_ball_pts >= self.min_n_pts:
-                            big_ball_position = mapper.balls[big_ball_id]['position']
-                            dist = np.linalg.norm(small_ball_position - big_ball_position)
-                            if dist < min_dist:
-                                min_dist = dist
-                                min_id = big_ball_id
-                if min_id is None:
-                    raise ValueError(f'Cannot merge one of balls so that resulting call contain >= {self.min_n_pts} points. '
-                                     f'Reduce value of min_pts parameter or increase radius.')
-                big_pts_ids = mapper.balls[min_id]['points_covered']
-                # join the points from big ball and small ball
-                all_pts_ids = big_pts_ids + ball_pts_ind
-                # update two balls
-                # update small ball
-                mapper.balls[ball_id]['merged'].append(min_id)
-                mapper.balls[ball_id]['points_covered'] = all_pts_ids
-                # update big ball
-                mapper.balls[min_id]['merged'].append(ball_id)
-                mapper.balls[min_id]['points_covered'] = all_pts_ids
-            # end ball merge
-            # go through all balls and build models
-            for ball_id, ball in mapper.balls.items():
-                x_ = xscaled[ball['points_covered'], :]
-                y_ = y[ball['points_covered']]
-                model = PolynomialRegression(degree=self.degree, max_pca_components=self.max_pca_components,
-                                             in_ball_model=self.in_ball_model)
-                model.fit(x_, y_)
-                mapper.balls[ball_id]['model'] = model
-
-    def fit(self, x, y):
-        self.npts = x.shape[0]  # number of points
-        self.dpts = x.shape[1]  # dimension of points
-        self.ball_mappers = []
-
-        # scale data
-        xscaled = self.scaler.fit_transform(x)
-
-        if self.substitution_policy == "global":
-            self.__fit_global(xscaled, y)
-        else:
-            self.__fit_nearest(xscaled, y)
-        # fit global model
-        if self.substitution_policy == "global":
-            self.global_model.fit(xscaled, y)
         self.fitted = True
 
     def predict(self, x_test):
@@ -184,10 +107,19 @@ class BMR:
                     # each of these balls covers several points from the trainig set
                     # here we get a list of training points ids
                     for ball_idx in ball_idxs:
-                        yhat[pt_id] += mapper.balls[ball_idx]["model"].predict(xp)
-                        counts[pt_id] += 1.0
+                        # don't make predictions using global model
+                        if mapper.balls[ball_idx]["model"] is not None:
+                            yhat[pt_id] += mapper.balls[ball_idx]["model"].predict(xp)
+                            counts[pt_id] += 1.0
                 else:
                     pass
+        # search for point for which no predictions was made
+        # in that case we have to use global model
+        no_pred_mask = (counts == 0)
+        if np.sum(no_pred_mask) > 0:
+            counts[no_pred_mask] = 1
+            yhat[no_pred_mask] = self.global_model.predict(x_test_scaled[no_pred_mask])
+        # average predictions
         yhat = np.array(yhat)
         counts = np.array(counts)
         yhat /= counts
@@ -219,28 +151,27 @@ class BMR:
         intercepts = np.mean(intercepts, axis=0)
         return coeffs, intercepts
 
-    def summary(self):
-        print(f'Number of balls: {[len(mapper.balls) for mapper in self.ball_mappers]}')
-        for mapper_id, mapper in enumerate(self.ball_mappers):
-            print(f'Mapper {mapper_id}')
-            for ball_id in mapper.balls:
-                beta = mapper.balls[ball_id]['model']._model.coef_[0, :]
-                intercept = mapper.balls[ball_id]['model']._model.intercept_
-                merged = False
-                if 'merged' in mapper.balls[ball_id]:
-                    merged = mapper.balls[ball_id]['merged']
-                    size = len(mapper.balls[ball_id]['points_covered'])
-                print(f'BM={mapper_id} node={ball_id} #points {size}, '
-                      f'pos={mapper.balls[ball_id]["position"]}, '
-                      f'beta={beta}, '
-                      f'intercept={intercept[0]}, merged={merged}')
+    # def summary(self):
+    #     print(f'Number of balls: {[len(mapper.balls) for mapper in self.ball_mappers]}')
+    #     for mapper_id, mapper in enumerate(self.ball_mappers):
+    #         print(f'Mapper {mapper_id}')
+    #         for ball_id in mapper.balls:
+    #             beta = mapper.balls[ball_id]['model']._model.coef_[0, :]
+    #             intercept = mapper.balls[ball_id]['model']._model.intercept_
+    #             merged = False
+    #             if 'merged' in mapper.balls[ball_id]:
+    #                 merged = mapper.balls[ball_id]['merged']
+    #                 size = len(mapper.balls[ball_id]['points_covered'])
+    #             print(f'BM={mapper_id} node={ball_id} #points {size}, '
+    #                   f'pos={mapper.balls[ball_id]["position"]}, '
+    #                   f'beta={beta}, '
+    #                   f'intercept={intercept[0]}, merged={merged}')
 
 
     def get_params(self, deep=True):
         out = dict()
         out["epsilon"] = self.epsilon
         out["M"] = self.M
-        out["substitution_policy"] = self.substitution_policy
         out["min_n_pts"] = self.min_n_pts
         out['in_ball_model'] = self.in_ball_model
         out['standard_scaler'] = self.standard_scaler
@@ -254,4 +185,6 @@ class BMR:
     def score(self, x, y):
         yhat = self.predict(x)
         return r2_score(y, yhat)
-        #return -mean_squared_error(yhat, y, squared=False)
+    def score_rmse(self, x, y):
+        yhat = self.predict(x)
+        return mean_squared_error(yhat, y, squared=False)

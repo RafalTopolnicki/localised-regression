@@ -33,7 +33,6 @@ class BallMapper:
                                                'position': points[idx_p],
                                                'points_covered': [],
                                                'model': None,
-                                               'merged': [],
                                                }
                 centers_counter += 1
 

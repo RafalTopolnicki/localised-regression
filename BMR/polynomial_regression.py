@@ -25,7 +25,7 @@ class PolynomialRegression:
         if in_ball_model == 'linear':
             self._model = LinearRegression()
         else:
-            self._model = ElasticNet(alpha=0.001, max_iter=10000)  # this is just to avid super large coeff estimates for ties
+            self._model = ElasticNet(alpha=0.001, max_iter=10000)
         self._pca = None
 
     def fit(self, x, y):
