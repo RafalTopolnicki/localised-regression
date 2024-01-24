@@ -55,7 +55,8 @@ def optimize_min_n_pts(
 
 
 class BMR:
-    def __init__(self, epsilon, min_n_pts, M, degree=1, max_pca_components=None, in_ball_model="linear"):
+    def __init__(self, epsilon, min_n_pts, M, degree=1, max_pca_components=None, in_ball_model="linear",
+                 n_jobs=1):
         self.epsilon = epsilon
         self.min_n_pts = min_n_pts
         self.degree = degree
@@ -65,6 +66,7 @@ class BMR:
         self.global_model = PolynomialRegression(degree=self.degree, in_ball_model=in_ball_model)
         self.ball_mappers = []
         self.M = M
+        self.n_jobs = n_jobs
 
     def create_and_fit_single(self, x, y):
         bm = SingleBMR(
@@ -77,7 +79,9 @@ class BMR:
         bm.fit(x, y)
         return bm
 
-    def fit(self, x, y, n_jobs=1):
+    def fit(self, x, y, n_jobs=None):
+        if n_jobs is None:
+            n_jobs = self.n_jobs
         self.global_model.fit(x, y)
         if n_jobs == 1:
             self.ball_mappers = [self.create_and_fit_single(x, y) for i in range(self.M)]
@@ -91,7 +95,7 @@ class BMR:
         #   bm.fit(x, y)
         self.fitted = True
 
-    def predict(self, x, n_jobs=5, return_all_preds=False):
+    def predict(self, x, n_jobs=None, return_all_preds=False):
         # preds = []
         # prediction_masks = []
         # #for bm in self.ball_mappers:
@@ -101,6 +105,8 @@ class BMR:
         #
         # #res = Parallel(n_jobs=n_jobs)(delayed(self.predict_on_single)(i, x) for i in range(self.M))
         # #res = Parallel(n_jobs=n_jobs)(delayed(self.predict_on_single)(bm, x) for bm in self.ball_mappers)
+        if n_jobs is None:
+            n_jobs = self.n_jobs
         res = Parallel(n_jobs=n_jobs)(delayed(bm.predict)(x) for bm in self.ball_mappers)
         preds = [r[0] for r in res]
         prediction_masks = [r[1] for r in res]
