@@ -22,20 +22,20 @@ class BallMapper:
             is_covered = False
 
             for idx_b in self.balls:
-                distance = np.linalg.norm(p - self.balls[idx_b]['position'])
+                distance = np.linalg.norm(p - self.balls[idx_b]["position"])
                 if distance <= self.epsilon:
                     is_covered = True
-                    self.balls[idx_b]['points_covered'].append(idx_p)
+                    self.balls[idx_b]["points_covered"].append(idx_p)
                     break
 
             if not is_covered:
-                self.balls[centers_counter] = {'idxp': idx_p,
-                                               'position': points[idx_p],
-                                               'points_covered': [],
-                                               'model': None,
-                                               }
+                self.balls[centers_counter] = {
+                    "idxp": idx_p,
+                    "position": points[idx_p],
+                    "points_covered": [],
+                    "model": None,
+                }
                 centers_counter += 1
-
 
     def find_balls(self, points, nearest_neighbour_extrapolation=False):
         """
@@ -53,7 +53,7 @@ class BallMapper:
             min_distance = np.Inf
             min_distance_vert = None
             for idx_v in self.balls:
-                distance = np.linalg.norm(p - self.balls[idx_v]['position'])
+                distance = np.linalg.norm(p - self.balls[idx_v]["position"])
                 if distance <= self.epsilon:
                     covered = True
                     vertices_ids_p.append(idx_v)
