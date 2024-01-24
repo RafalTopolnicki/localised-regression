@@ -1,8 +1,9 @@
 numpy
-sklearn
 pandas
 jupyterlab
 scipy
 matplotlib
-networkx
-tqdm
+ipywidgets
+Cython
+black
+statsmodels
