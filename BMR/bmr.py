@@ -158,6 +158,7 @@ class BMR:
         out["M"] = self.M
         out["min_n_pts"] = self.min_n_pts
         out["in_ball_model"] = self.in_ball_model
+        out["n_jobs"] = self.n_jobs
         return out
 
     def set_params(self, **params):
