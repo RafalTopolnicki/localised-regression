@@ -95,7 +95,7 @@ class BMR:
         #   bm.fit(x, y)
         self.fitted = True
 
-    def predict(self, x, n_jobs=None, return_all_preds=False):
+    def predict(self, x, n_jobs=None, return_all_preds=False, return_local_mask=False):
         # preds = []
         # prediction_masks = []
         # #for bm in self.ball_mappers:
@@ -126,6 +126,8 @@ class BMR:
         # see if global model must be used for any datapoint
         if np.any(count_mask):
             avg_pred[count_mask] = self.global_model.predict(x[count_mask])
+        if return_local_mask:
+            return avg_pred, count_mask
         return avg_pred
 
     def coefficients(self, points, alpha=0.05):
